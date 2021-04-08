@@ -1,0 +1,68 @@
+package max.lebedev.trigonometric;
+import max.lebedev.AbstractFunction;
+import max.lebedev.util.FactorialSeries;
+
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
+
+import static java.lang.Double.*;
+import static java.lang.Math.PI;
+
+public class SinCalculator extends AbstractFunction {
+    {
+            getStubsTable().put(-PI, 0.0);
+        getStubsTable().put(-PI / 2, -1.0);
+        getStubsTable().put(0.0, 0.0);
+        getStubsTable().put(PI / 2, 1.0);
+        getStubsTable().put(PI, 0.0);
+        getStubsTable().put(3 * PI / 4, 0.7071);
+        getStubsTable().put(-3 * PI / 4, -0.7071);
+        getStubsTable().put( PI / 4, 	0.7071);
+        getStubsTable().put(-PI / 4, -0.7071);
+
+    }
+
+    public SinCalculator(Double accuracy) {
+        super(accuracy);
+    }
+
+    public Double calculateFunction(Double arg) {
+        if (isNaN(arg) || isInfinite(arg)) {
+            return NaN;
+        }
+        if (arg == 0 || arg == -PI  || arg == PI || arg == 2 * PI ||    arg == -2 * PI ) {
+            return 0.0;
+        }
+
+        arg = subOverages(arg);
+
+        int scale = 10;
+
+        BigDecimal last;
+        BigDecimal value = new BigDecimal(0d, MathContext.UNLIMITED);
+        int n = 0;
+
+        do {
+            last = value;
+            value = value.add((new BigDecimal(-1, MathContext.UNLIMITED).pow(n)).
+                    multiply((new BigDecimal(arg, MathContext.UNLIMITED).pow(2 * n + 1))).
+                    divide(new BigDecimal(FactorialSeries.factorial(2 * n + 1)), scale, RoundingMode.HALF_UP));
+            n++;
+        } while (getAccuracy() <= value.subtract(last).abs().doubleValue());
+
+        double valueToDouble = value.setScale(scale, RoundingMode.UP).doubleValue();
+
+        if(valueToDouble > 1) valueToDouble = 1;
+        else if(valueToDouble < -1) valueToDouble = -1;
+        return valueToDouble;
+    }
+
+    protected static double subOverages(double arg) {
+        long periodCounter = (long) (arg / (2 * PI)) + ((arg > 0)? 1: -1);
+
+        if(arg > PI || arg < -PI)
+            arg -= periodCounter * 2 * PI;
+        return arg;
+    }
+}
